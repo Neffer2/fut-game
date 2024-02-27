@@ -25,6 +25,7 @@ const config = {
         }
     },
     input :{
+        gamepad: true,
 		activePointers: 3,
     }
 };
