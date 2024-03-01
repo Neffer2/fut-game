@@ -2,7 +2,8 @@
 let width, height, mContext;
 
 // Game vars
-let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [];
+let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [],
+    stadium, background, sky;
 
 // Player movements
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Velocity = 400;  
@@ -21,11 +22,14 @@ export class Game extends Phaser.Scene {
         width = this.game.config.width;
         height = this.game.config.height;   
         
-        grass = this.physics.add.image(10, (height), 'grass')
-                .setScale(20, 1)
-                .setSize(width, 40)
-                .setImmovable(true);
-        grass.body.allowGravity = false;
+        background = this.add.image((width/2), 195, 'sky');
+        stadium = this.add.image((width/2), (height/2), 'stadium');
+
+        grass = this.physics.add.image((width/2), (height - 28), 'field')
+                .setSize(width, 50)
+                .setImmovable(true)
+                .setCollideWorldBounds(true);
+        // grass.body.allowGravity = false;
 
         goal1 = this.add.image((width - 70), height - 140, 'goal1')
                 .setName("Goal1")
@@ -38,18 +42,21 @@ export class Game extends Phaser.Scene {
                 .setVelocity(600)
                 .setCollideWorldBounds(true)
                 .setCircle(30)
-                .setBounce(1);
+                .setBounce(1)
+                .setMass(0.5);
 
-        player1 = this.physics.add.sprite((width/3), 600, "player", 0)
+        player1 = this.physics.add.sprite((width/3), 500, "player", 0)
                 .setName("Player1")
                 .setScale(5)
                 .setSize(16, 28, true).setOffset(24, 14)
+                .setMass(1)
                 .setCollideWorldBounds(true);
 
-        player2 = this.physics.add.sprite((width - (width/3)), 600, "player", 0)
+        player2 = this.physics.add.sprite((width - (width/3)), 500, "player", 0)
                 .setName("Player2")
                 .setScale(5)
                 .setSize(16, 28, true).setOffset(24, 14)
+                .setMass(1)
                 .setCollideWorldBounds(true);
         player2.flipX = true;
 
@@ -106,8 +113,10 @@ export class Game extends Phaser.Scene {
         });
 
         // Colitions
-        this.physics.add.collider(player1, grass, () => player1.y = 650);
-        this.physics.add.collider(player2, grass, () => player2.y = 650);
+        this.physics.add.collider(player1, grass);
+        this.physics.add.collider(player2, grass);
+        this.physics.add.collider(ball, grass);
+
         this.physics.add.collider(player1, ball, rebote);
         this.physics.add.collider(player2, ball, rebote);
         this.physics.add.collider(player1, player2);
@@ -140,7 +149,7 @@ export class Game extends Phaser.Scene {
 
             setTimeout(() => {
                 ball.body.enable = true;
-                ball.setVelocity(600);
+                ball.setVelocity(Phaser.Math.Between(-600, 600));
             }, 800);
         });
 
