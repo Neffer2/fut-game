@@ -3,7 +3,7 @@ let width, height, mContext;
 
 // Game vars
 let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [],
-    stadium, background, sky;
+    stadium, background, sky, clouds;
 
 // Player movements
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Velocity = 400;  
@@ -22,7 +22,9 @@ export class Game extends Phaser.Scene {
         width = this.game.config.width;
         height = this.game.config.height;   
         
-        background = this.add.image((width/2), 195, 'sky');
+        background = this.add.tileSprite((width/2), 215, width, (height/2),'sky');
+        clouds = this.add.tileSprite((width/2), 215, width, (height/2), 'cloud');
+
         stadium = this.add.image((width/2), (height/2), 'stadium');
 
         grass = this.physics.add.image((width/2), (height - 28), 'field')
@@ -43,6 +45,7 @@ export class Game extends Phaser.Scene {
                 .setCollideWorldBounds(true)
                 .setCircle(30)
                 .setBounce(1)
+                .setMaxVelocity(1200)
                 .setMass(0.5);
 
         player1 = this.physics.add.sprite((width/3), 500, "player", 0)
@@ -88,6 +91,8 @@ export class Game extends Phaser.Scene {
         limits.push(this.add.rectangle(70, (height - 250), (width/9), 10, 0x6666ff).setName("goal1-limit"));
         limits.push(this.add.rectangle((width - 70), (height - 250), (width/9), 10, 0x6666ff).setName("goal2-limit"));
 
+        limits.push(this.add.rectangle((width/2), (height - 10), width, 10, 0x6666ff).setName("sub-floor"));
+
         limits.forEach(limit => {
             this.physics.add.existing(limit, true);
             limit.setAlpha(0);
@@ -121,12 +126,18 @@ export class Game extends Phaser.Scene {
         this.physics.add.collider(player2, ball, rebote);
         this.physics.add.collider(player1, player2);
 
-        this.physics.add.collider(player1, limits);
-        this.physics.add.collider(player2, limits);
+        this.physics.add.collider(player1, limits, collideLimits);
+        this.physics.add.collider(player2, limits, collideLimits);
         this.physics.add.collider(ball, limits);
 
         this.physics.add.collider(ball, goal1);
         this.physics.add.collider(ball, goal2);
+
+        function collideLimits(player, limit){
+            if (limit.name === "sub-floor"){
+                player.setVelocityY(-450);
+            }
+        }
 
         function rebote(player, ball){
             if (player.body.velocity.x === 0){
@@ -170,6 +181,9 @@ export class Game extends Phaser.Scene {
     }
 
     update(){
+        background.tilePositionX += 0.05;
+        clouds.tilePositionX -= 0.1;
+
         if (p1GoLeft){
             player1.setVelocityX(-(p1Velocity));
             player1.anims.play('right', true);
@@ -220,15 +234,15 @@ export class Game extends Phaser.Scene {
             // const axisV = pad.axes[1].getValue();
 
             if (axisH < 0){
-                p2GoLeft = true;
-                p2GoRight = false;
+                p1GoLeft = true;
+                p1GoRight = false;
             }else if (axisH > 0){
-                p2GoRight = true;
-                p2GoLeft = false;
+                p1GoRight = true;
+                p1GoLeft = false;
             }
             else {
-                p2GoRight = false;
-                p2GoLeft = false;
+                p1GoRight = false;
+                p1GoLeft = false;
             }
         }
     }
@@ -298,13 +312,21 @@ export class Game extends Phaser.Scene {
     player1GamepadControls(){
         gamepad2.on('down', function (pad, button, value) {
             if (pad === 0){
-                p2Jump = true;
+                p1Jump = true;
+            }
+
+            if (pad === 1){
+                player1.setMass(5);
             }
         });
 
         gamepad2.on('up', function (pad, button, index) {
             if (pad === 0){
-                p2Jump = false;
+                p1Jump = false;
+            }
+
+            if (pad === 1){
+                player1.setMass(1);
             }
         });
     }

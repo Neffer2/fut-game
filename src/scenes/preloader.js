@@ -14,6 +14,7 @@ export class Preloader extends Phaser.Scene {
         this.load.image('field', 'env/field.png');
         this.load.image('stadium', 'env/stadium.png');
         this.load.image('sky', 'env/sky.png');
+        this.load.image('cloud', 'env/clouds.png');
         
         this.load.spritesheet('player', 'player/player.png', {frameWidth: 64, frameHeight: 64});
 
