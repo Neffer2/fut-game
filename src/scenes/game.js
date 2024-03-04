@@ -48,17 +48,15 @@ export class Game extends Phaser.Scene {
                 .setMaxVelocity(1200)
                 .setMass(0.5);
 
-        player1 = this.physics.add.sprite((width/3), 500, "player", 0)
+        player1 = this.physics.add.sprite((width/3), 500, "iddle", 0)
                 .setName("Player1")
-                .setScale(5)
-                .setSize(16, 28, true).setOffset(24, 14)
+                .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
 
         player2 = this.physics.add.sprite((width - (width/3)), 500, "player", 0)
                 .setName("Player2")
-                .setScale(5)
-                .setSize(16, 28, true).setOffset(24, 14)
+                .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
         player2.flipX = true;
@@ -167,15 +165,29 @@ export class Game extends Phaser.Scene {
         // Animations
         this.anims.create({
             key: 'right',
-            frames: this.anims.generateFrameNumbers('player', {start: 54, end: 55}),
+            frames: this.anims.generateFrameNumbers('p1-run', {start: 0, end: 7}),
+            frameRate: 20,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'kick',
+            frames: this.anims.generateFrameNumbers('p1-kick', {start: 0, end: 1}),
             frameRate: 10,
-            repeat: 3
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'jump',
+            frames: this.anims.generateFrameNumbers('p1-jump', {start: 0}),
+            frameRate: 10,
+            repeat: 0
         });
 
         this.anims.create({
             key: 'iddle',
-            frames: this.anims.generateFrameNumbers('player', {start: 53, end: 53}),
-            frameRate: 5,
+            frames: this.anims.generateFrameNumbers('p1-iddle', {start: 0, end: 4}),
+            frameRate: 10,
             repeat: -1
         });
     }
@@ -191,12 +203,13 @@ export class Game extends Phaser.Scene {
             player1.setVelocityX(p1Velocity);
             player1.anims.play('right', true);
             player1.flipX = false;
-        }else {
+        }else if(!p1Jump) {
             player1.setVelocityX(0);
             player1.anims.play('iddle', true);
         }
 
         if (p1Jump && player1.body.touching.down){
+            player1.anims.play('jump', true);
             player1.setVelocityY(-450);
         }
 
@@ -338,6 +351,7 @@ export class Game extends Phaser.Scene {
             }
 
             if (pad === 1){
+                player1.anims.play('kick', true);
                 player1.setMass(5);
             }
         });
