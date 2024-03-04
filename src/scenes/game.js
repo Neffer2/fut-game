@@ -9,7 +9,7 @@ let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = 
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Velocity = 400;  
 let p2GoRight = false, p2GoLeft = false, p2Jump = false, p2Velocity = 400;  
 
-let gamepad2;
+let gamepad1, gamepad2;
 
 export class Game extends Phaser.Scene {
     constructor ()
@@ -83,8 +83,8 @@ export class Game extends Phaser.Scene {
 
         /** GAMEPADS **/
         this.input.gamepad.once('down', function (gamepad, button, value) {
-            gamepad2 = gamepad;
-            mContext.player1GamepadControls();
+            gamepad1 = gamepad;
+            mContext.GamepadControls();
         });
         /****/
 
@@ -181,8 +181,7 @@ export class Game extends Phaser.Scene {
     }
 
     update(){
-        background.tilePositionX += 0.05;
-        clouds.tilePositionX -= 0.1;
+        clouds.tilePositionX -= .2;
 
         if (p1GoLeft){
             player1.setVelocityX(-(p1Velocity));
@@ -226,11 +225,12 @@ export class Game extends Phaser.Scene {
             return;
         }
 
-        const pad = this.input.gamepad.getPad(0);
+        gamepad1 = this.input.gamepad.getPad(0);
+        gamepad2 = this.input.gamepad.getPad(1);
 
-        if (pad.axes.length)
+        if (gamepad1 && gamepad1.axes.length)
         {
-            const axisH = pad.axes[0].getValue();
+            const axisH = gamepad1.axes[0].getValue();
             // const axisV = pad.axes[1].getValue();
 
             if (axisH < 0){
@@ -245,8 +245,29 @@ export class Game extends Phaser.Scene {
                 p1GoLeft = false;
             }
         }
+
+        if (gamepad2 && gamepad2.axes.length)
+        {
+            const axisH = gamepad2.axes[0].getValue();
+            // const axisV = pad.axes[1].getValue();
+
+            if (axisH < 0){
+                p2GoLeft = true;
+                p2GoRight = false;
+            }else if (axisH > 0){
+                p2GoRight = true;
+                p2GoLeft = false;
+            }
+            else {
+                p2GoRight = false;
+                p2GoLeft = false;
+            }
+        }
+
+        this.GamepadControls();
     }
 
+    /* virtual joystick */
     player1Controls(){
         let cursorKeys = joyStick1.createCursorKeys();
         for (var name in cursorKeys) {
@@ -308,9 +329,10 @@ export class Game extends Phaser.Scene {
             }
         }
     }
+    /* ** */
 
-    player1GamepadControls(){
-        gamepad2.on('down', function (pad, button, value) {
+    GamepadControls(){
+        gamepad1.on('down', function (pad, button, value) {
             if (pad === 0){
                 p1Jump = true;
             }
@@ -320,13 +342,33 @@ export class Game extends Phaser.Scene {
             }
         });
 
-        gamepad2.on('up', function (pad, button, index) {
+        gamepad1.on('up', function (pad, button, index) {
             if (pad === 0){
                 p1Jump = false;
             }
 
             if (pad === 1){
                 player1.setMass(1);
+            }
+        });
+
+        gamepad2.on('down', function (pad, button, value) {
+            if (pad === 0){
+                p2Jump = true;
+            }
+
+            if (pad === 1){
+                player2.setMass(5);
+            }
+        });
+
+        gamepad2.on('up', function (pad, button, index) {
+            if (pad === 0){
+                p2Jump = false;
+            }
+
+            if (pad === 1){
+                player2.setMass(1);
             }
         });
     }
