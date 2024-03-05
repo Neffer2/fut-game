@@ -15,15 +15,16 @@ export class Preloader extends Phaser.Scene {
         this.load.image('stadium', 'env/stadium.png');
         this.load.image('sky', 'env/sky.png');
         this.load.image('cloud', 'env/clouds.png');
-        
-        this.load.spritesheet('player', 'player/player.png', {frameWidth: 64, frameHeight: 64});
 
         this.load.spritesheet('p1-iddle', 'player/player1/idle.png', {frameWidth: 200.3, frameHeight: 200.5});
         this.load.spritesheet('p1-jump', 'player/player1/jump.png', {frameWidth: 200, frameHeight: 200});
         this.load.spritesheet('p1-kick', 'player/player1/kick.png', {frameWidth: 200, frameHeight: 200});
         this.load.spritesheet('p1-run', 'player/player1/run.png', {frameWidth: 200, frameHeight: 200});
-        
-        this.load.spritesheet('player2', 'player/player.png', {frameWidth: 64, frameHeight: 64});
+
+        this.load.spritesheet('p2-iddle', 'player/player2/idle.png', {frameWidth: 200, frameHeight: 200});
+        this.load.spritesheet('p2-jump', 'player/player2/jump.png', {frameWidth: 200, frameHeight: 200});
+        this.load.spritesheet('p2-kick', 'player/player2/kick.png', {frameWidth: 200, frameHeight: 200});
+        this.load.spritesheet('p2-run', 'player/player2/run.png', {frameWidth: 200, frameHeight: 200});
 
         this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
     }

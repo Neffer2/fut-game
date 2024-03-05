@@ -6,8 +6,8 @@ let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = 
     stadium, background, sky, clouds;
 
 // Player movements
-let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Velocity = 400;  
-let p2GoRight = false, p2GoLeft = false, p2Jump = false, p2Velocity = 400;  
+let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Kick = false, p1Velocity = 400;  
+let p2GoRight = false, p2GoLeft = false, p2Jump = false, p2Kick = false, p2Velocity = 400;  
 
 let gamepad1, gamepad2;
 
@@ -40,6 +40,7 @@ export class Game extends Phaser.Scene {
                 .setName("Goal2")
                 
         ball = this.physics.add.sprite((width/2), (height/2), 'ball')
+                .setScale(0.8)
                 .setName("Ball")
                 .setVelocity(600)
                 .setCollideWorldBounds(true)
@@ -48,13 +49,13 @@ export class Game extends Phaser.Scene {
                 .setMaxVelocity(1200)
                 .setMass(0.5);
 
-        player1 = this.physics.add.sprite((width/3), 500, "iddle", 0)
+        player1 = this.physics.add.sprite((width/3), 500, "p1-iddle", 0)
                 .setName("Player1")
                 .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
 
-        player2 = this.physics.add.sprite((width - (width/3)), 500, "player", 0)
+        player2 = this.physics.add.sprite((width - (width/3)), 500, "p2-iddle", 0)
                 .setName("Player2")
                 .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
@@ -81,7 +82,6 @@ export class Game extends Phaser.Scene {
 
         /** GAMEPADS **/
         this.input.gamepad.once('down', function (gamepad, button, value) {
-            gamepad1 = gamepad;
             mContext.GamepadControls();
         });
         /****/
@@ -164,29 +164,57 @@ export class Game extends Phaser.Scene {
 
         // Animations
         this.anims.create({
-            key: 'right',
+            key: 'p1-right',
             frames: this.anims.generateFrameNumbers('p1-run', {start: 0, end: 7}),
-            frameRate: 20,
+            frameRate: 15,
             repeat: 0
         });
 
         this.anims.create({
-            key: 'kick',
+            key: 'p1-kick',
             frames: this.anims.generateFrameNumbers('p1-kick', {start: 0, end: 1}),
             frameRate: 10,
             repeat: 0
         });
 
         this.anims.create({
-            key: 'jump',
+            key: 'p1-jump',
             frames: this.anims.generateFrameNumbers('p1-jump', {start: 0}),
             frameRate: 10,
             repeat: 0
         });
 
         this.anims.create({
-            key: 'iddle',
+            key: 'p1-iddle',
             frames: this.anims.generateFrameNumbers('p1-iddle', {start: 0, end: 4}),
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'p2-right',
+            frames: this.anims.generateFrameNumbers('p2-run', {start: 0, end: 7}),
+            frameRate: 15,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'p2-kick',
+            frames: this.anims.generateFrameNumbers('p2-kick', {start: 0, end: 1}),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'p2-jump',
+            frames: this.anims.generateFrameNumbers('p2-jump', {start: 0}),
+            frameRate: 10,
+            repeat: 0
+        });
+
+        this.anims.create({
+            key: 'p2-iddle',
+            frames: this.anims.generateFrameNumbers('p2-iddle', {start: 0, end: 4}),
             frameRate: 10,
             repeat: -1
         });
@@ -197,19 +225,19 @@ export class Game extends Phaser.Scene {
 
         if (p1GoLeft){
             player1.setVelocityX(-(p1Velocity));
-            player1.anims.play('right', true);
+            if (!p1Jump && !p1Kick){player1.anims.play('p1-right', true);}
             player1.flipX = true;
         }else if (p1GoRight){
             player1.setVelocityX(p1Velocity);
-            player1.anims.play('right', true);
+            if (!p1Jump && !p1Kick){player1.anims.play('p1-right', true);}
             player1.flipX = false;
-        }else if(!p1Jump) {
+        }else if(!p1Jump && !p1GoLeft && !p1GoRight && !p1Kick) {
             player1.setVelocityX(0);
-            player1.anims.play('iddle', true);
+            player1.anims.play('p1-iddle', true);
         }
 
         if (p1Jump && player1.body.touching.down){
-            player1.anims.play('jump', true);
+            player1.anims.play('p1-jump', true);
             player1.setVelocityY(-450);
         }
 
@@ -217,18 +245,19 @@ export class Game extends Phaser.Scene {
 
         if (p2GoLeft){
             player2.setVelocityX(-(p2Velocity));
-            player2.anims.play('right', true);
-            player2.flipX = true;
+            if (!p2Jump && !p2Kick){player2.anims.play('p2-right', true);}
+            player2.flipX = false;
         }else if (p2GoRight){
             player2.setVelocityX(p2Velocity);
-            player2.anims.play('right', true);
-            player2.flipX = false;
-        }else {
+            if (!p2Jump && !p2Kick){player2.anims.play('p2-right', true);}
+            player2.flipX = true;
+        }else if(!p2Jump && !p2GoLeft && !p2GoRight && !p2Kick) {
             player2.setVelocityX(0);
-            player2.anims.play('iddle', true);
+            player2.anims.play('p2-iddle', true);
         }
 
         if (p2Jump && player2.body.touching.down){
+            player2.anims.play('p2-jump', true);
             player2.setVelocityY(-450);
         }
 
@@ -276,8 +305,6 @@ export class Game extends Phaser.Scene {
                 p2GoLeft = false;
             }
         }
-
-        this.GamepadControls();
     }
 
     /* virtual joystick */
@@ -346,42 +373,47 @@ export class Game extends Phaser.Scene {
 
     GamepadControls(){
         gamepad1.on('down', function (pad, button, value) {
-            if (pad === 0){
+            if (pad === 2){
                 p1Jump = true;
             }
-
+        
             if (pad === 1){
-                player1.anims.play('kick', true);
+                p1Kick = true;
+                player1.anims.play('p1-kick', true);
                 player1.setMass(5);
             }
         });
 
         gamepad1.on('up', function (pad, button, index) {
-            if (pad === 0){
+            if (pad === 2){
                 p1Jump = false;
             }
 
             if (pad === 1){
+                p1Kick = false;
                 player1.setMass(1);
             }
         });
 
         gamepad2.on('down', function (pad, button, value) {
-            if (pad === 0){
+            if (pad === 2){
                 p2Jump = true;
             }
 
             if (pad === 1){
+                p2Kick = true;
+                player2.anims.play('p2-kick', true);
                 player2.setMass(5);
             }
         });
 
         gamepad2.on('up', function (pad, button, index) {
-            if (pad === 0){
+            if (pad === 2){
                 p2Jump = false;
             }
 
             if (pad === 1){
+                p2Kick = false;
                 player2.setMass(1);
             }
         });

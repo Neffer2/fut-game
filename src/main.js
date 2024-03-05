@@ -20,7 +20,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true,
+            // debug: true,
             gravity: { y: 1200 },
             fps: 120 // Aumenta la frecuencia de actualización
         }
