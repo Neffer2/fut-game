@@ -26,6 +26,8 @@ export class Preloader extends Phaser.Scene {
         this.load.spritesheet('p2-kick', 'player/player2/kick.png', {frameWidth: 200, frameHeight: 200});
         this.load.spritesheet('p2-run', 'player/player2/run.png', {frameWidth: 200, frameHeight: 200});
 
+        this.load.spritesheet('kick', 'player/kick/kick.png', {frameWidth: 271, frameHeight: 271});
+
         this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
     }
 

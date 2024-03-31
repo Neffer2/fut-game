@@ -3,7 +3,7 @@ let width, height, mContext;
 
 // Game vars
 let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [],
-    stadium, background, sky, clouds;
+    stadium, background, sky, clouds, kickAnimation;
 
 // Player movements
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Kick = false, p1Velocity = 400;  
@@ -105,63 +105,6 @@ export class Game extends Phaser.Scene {
             net.setAlpha(0);
         });
 
-    }
-
-    create(){
-        // World step
-        this.physics.world.on('worldstep', () => {
-            ball.setAngularVelocity(
-                Phaser.Math.RadToDeg(ball.body.velocity.x / ball.body.halfWidth)
-            );
-        });
-
-        // Colitions
-        this.physics.add.collider(player1, grass);
-        this.physics.add.collider(player2, grass);
-        this.physics.add.collider(ball, grass);
-
-        this.physics.add.collider(player1, ball, rebote);
-        this.physics.add.collider(player2, ball, rebote);
-        this.physics.add.collider(player1, player2);
-
-        this.physics.add.collider(player1, limits, collideLimits);
-        this.physics.add.collider(player2, limits, collideLimits);
-        this.physics.add.collider(ball, limits);
-
-        this.physics.add.collider(ball, goal1);
-        this.physics.add.collider(ball, goal2);
-
-        function collideLimits(player, limit){
-            if (limit.name === "sub-floor"){
-                player.setVelocityY(-450);
-            }
-        }
-
-        function rebote(player, ball){
-            if (player.body.velocity.x === 0){
-                ball.setVelocityX(Phaser.Math.Between(-600, 600));
-            }
-        }
-
-        this.physics.add.overlap(ball, goalNets, (ball, net) => {
-            if (net.name === "net1"){
-                player2.score++;
-                console.log("Gol del jugador 2");
-            }else if (net.name === "net2"){
-                player1.score++;
-                console.log("Gol del jugador 1");
-            }
-            
-            ball.setPosition((width/2), (height/2));
-            ball.body.enable = false;
-            mContext.cameras.main.shake(100);
-
-            setTimeout(() => {
-                ball.body.enable = true;
-                ball.setVelocity(Phaser.Math.Between(-600, 600));
-            }, 800);
-        });
-
         // Animations
         this.anims.create({
             key: 'p1-right',
@@ -218,6 +161,78 @@ export class Game extends Phaser.Scene {
             frameRate: 10,
             repeat: -1
         });
+
+        this.anims.create({
+            key: 'kick',
+            frames: this.anims.generateFrameNumbers('kick', {start: 0, end: 11}),
+            frameRate: 30,
+            repeat: 0
+        });
+    }
+
+    create(){
+        // World step
+        this.physics.world.on('worldstep', () => {
+            ball.setAngularVelocity(
+                Phaser.Math.RadToDeg(ball.body.velocity.x / ball.body.halfWidth)
+            );
+        });
+
+        // Colitions
+        this.physics.add.collider(player1, grass);
+        this.physics.add.collider(player2, grass);
+        this.physics.add.collider(ball, grass);
+
+        this.physics.add.collider(player1, ball, rebote);
+        this.physics.add.collider(player2, ball, rebote);
+        this.physics.add.collider(player1, player2);
+
+        this.physics.add.collider(player1, limits, collideLimits);
+        this.physics.add.collider(player2, limits, collideLimits);
+        this.physics.add.collider(ball, limits);
+
+        this.physics.add.collider(ball, goal1);
+        this.physics.add.collider(ball, goal2);
+
+        function collideLimits(player, limit){
+            if (limit.name === "sub-floor"){
+                player.setVelocityY(-450);
+            }
+        }
+
+        function rebote(player, ball){
+            if (player.body.mass == 5){
+                kickAnimation.setPosition(ball.x, ball.y).setVisible(true).play('kick');
+                kickAnimation.on('animationcomplete', () => {
+                    kickAnimation.setVisible(false);
+                });
+            }
+
+            if (player.body.velocity.x === 0){
+                ball.setVelocityX(Phaser.Math.Between(-600, 600));
+            }
+        }
+
+        this.physics.add.overlap(ball, goalNets, (ball, net) => {
+            if (net.name === "net1"){
+                player2.score++;
+                console.log("Gol del jugador 2");
+            }else if (net.name === "net2"){
+                player1.score++;
+                console.log("Gol del jugador 1");
+            }
+            
+            ball.setPosition((width/2), (height/2));
+            ball.body.enable = false;
+            mContext.cameras.main.shake(100);
+
+            setTimeout(() => {
+                ball.body.enable = true;
+                ball.setVelocity(Phaser.Math.Between(-600, 600));
+            }, 800);
+        });
+
+        kickAnimation = this.add.sprite(100, 100, 'kick').setVisible(false);
     }
 
     update(){
