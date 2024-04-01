@@ -28,6 +28,9 @@ export class Preloader extends Phaser.Scene {
 
         this.load.spritesheet('kick', 'player/kick/kick.png', {frameWidth: 271, frameHeight: 271});
 
+        this.load.audio('kick', 'sounds/kick.mp3');
+        this.load.audio('background', 'sounds/background.mp3');
+        this.load.audio('goal', 'sounds/goal.mp3');
         this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
     }
 

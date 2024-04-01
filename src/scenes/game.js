@@ -3,7 +3,7 @@ let width, height, mContext;
 
 // Game vars
 let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [],
-    stadium, background, sky, clouds, kickAnimation;
+    stadium, background, sky, clouds, kickAnimation, kickSound, backSound, goalSound, scorePlayer1, scorePlayer2;
 
 // Player movements
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Kick = false, p1Velocity = 400;  
@@ -23,8 +23,7 @@ export class Game extends Phaser.Scene {
         height = this.game.config.height;   
         
         background = this.add.tileSprite((width/2), 215, width, (height/2),'sky');
-        clouds = this.add.tileSprite((width/2), 215, width, (height/2), 'cloud');
-
+        clouds = this.add.tileSprite((width/2), 215, width, (height/2), 'cloud');        
         stadium = this.add.image((width/2), (height/2), 'stadium');
 
         grass = this.physics.add.image((width/2), (height - 28), 'field')
@@ -54,12 +53,14 @@ export class Game extends Phaser.Scene {
                 .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
+        player1.score = 0;
 
         player2 = this.physics.add.sprite((width - (width/3)), 500, "p2-iddle", 0)
                 .setName("Player2")
                 .setSize(80, 150, true).setOffset(60, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
+        player2.score = 0;
         player2.flipX = true;
 
         /** VIRTUAL JOYSTICKS **/
@@ -105,6 +106,19 @@ export class Game extends Phaser.Scene {
             net.setAlpha(0);
         });
 
+        kickSound = this.sound.add('kick');
+        goalSound = this.sound.add('goal');
+        goalSound.setVolume(0.2);
+        backSound = this.sound.add('background');
+        backSound.loop = true;
+        backSound.setVolume(0.1);
+        backSound.play();
+
+        scorePlayer1 = this.add.text((width/2) - 100, (height/5), player1.score, {font: '40px SoccerLeague', fill: '#fff'});
+        scorePlayer1.setTint(0xff0000);
+        scorePlayer2 = this.add.text((width/2) + 100, (height/5), player2.score, {font: '40px SoccerLeague', fill: '#fff'});
+        scorePlayer2.setTint(0x006CFF);
+ 
         // Animations
         this.anims.create({
             key: 'p1-right',
@@ -181,7 +195,7 @@ export class Game extends Phaser.Scene {
         // Colitions
         this.physics.add.collider(player1, grass);
         this.physics.add.collider(player2, grass);
-        this.physics.add.collider(ball, grass);
+        this.physics.add.collider(ball, grass, () => {kickSound.play();});
 
         this.physics.add.collider(player1, ball, rebote);
         this.physics.add.collider(player2, ball, rebote);
@@ -201,6 +215,7 @@ export class Game extends Phaser.Scene {
         }
 
         function rebote(player, ball){
+            kickSound.play();
             if (player.body.mass == 5){
                 kickAnimation.setPosition(ball.x, ball.y).setVisible(true).play('kick');
                 kickAnimation.on('animationcomplete', () => {
@@ -214,12 +229,13 @@ export class Game extends Phaser.Scene {
         }
 
         this.physics.add.overlap(ball, goalNets, (ball, net) => {
+            goalSound.play();
             if (net.name === "net1"){
                 player2.score++;
-                console.log("Gol del jugador 2");
+                scorePlayer2.setText(player2.score);
             }else if (net.name === "net2"){
                 player1.score++;
-                console.log("Gol del jugador 1");
+                scorePlayer1.setText(player1.score);
             }
             
             ball.setPosition((width/2), (height/2));
