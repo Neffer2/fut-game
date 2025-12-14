@@ -102,7 +102,9 @@ export class Game extends Phaser.Scene {
 
         /** VIRTUAL KICK BUTTONS **/
         // Crear botón de patada para jugador 1
-        kickButton1 = this.add.circle(200, 350, 40, 0xff6600, 0.7);
+        let kickButton1X = aiEnabled ? (width - 80) : 200;
+        let kickButton1Y = aiEnabled ? (height - 80) : 350;
+        kickButton1 = this.add.circle(kickButton1X, kickButton1Y, 40, 0xff6600, 0.7);
         kickButton1.setInteractive();
         kickButton1.on('pointerdown', () => {
             p1Kick = true;
@@ -139,7 +141,9 @@ export class Game extends Phaser.Scene {
         }
 
         // Añadir texto a los botones
-        this.add.text(200, 350, 'TIRAR', { 
+        let kickButton1TextX = aiEnabled ? (width - 80) : 200;
+        let kickButton1TextY = aiEnabled ? (height - 80) : 350;
+        this.add.text(kickButton1TextX, kickButton1TextY, 'TIRAR', { 
             font: '16px Arial', 
             fill: '#fff' 
         }).setOrigin(0.5);

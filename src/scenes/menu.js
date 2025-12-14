@@ -40,5 +40,22 @@ export class Menu extends Phaser.Scene {
             this.registry.set('mode', 'two');
             this.scene.start('Game');
         });
+
+        // Fullscreen Button
+        const fullscreenBtn = this.add.circle(width - 50, 50, 25, 0x333333, 0.8);
+        fullscreenBtn.setInteractive({ useHandCursor: true });
+        fullscreenBtn.on('pointerdown', () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        });
+        
+        // Añadir ícono de pantalla completa
+        this.add.text(width - 50, 50, '⛶', { 
+            font: '20px Arial', 
+            fill: '#fff' 
+        }).setOrigin(0.5);
     }
 }
