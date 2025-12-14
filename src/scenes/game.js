@@ -2,12 +2,21 @@
 let width, height, mContext;
 
 // Game vars
-let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, limits = [], goalNets = [],
+let player1, player2, goal1, goal2, ball, grass, joyStick1, joyStick2, kickButton1, kickButton2, limits = [], goalNets = [],
     stadium, background, sky, clouds, kickAnimation, kickSound, backSound, goalSound, scorePlayer1, scorePlayer2;
+
+// Game mode
+let gameMode = 'two'; // 'single' for AI, 'two' for two players
+let aiEnabled = false;
 
 // Player movements
 let p1GoRight = false, p1GoLeft = false, p1Jump = false, p1Kick = false, p1Velocity = 400;  
-let p2GoRight = false, p2GoLeft = false, p2Jump = false, p2Kick = false, p2Velocity = 400;  
+let p2GoRight = false, p2GoLeft = false, p2Jump = false, p2Kick = false, p2Velocity = 400;
+
+// AI variables
+let aiTimer = 0;
+let aiDecisionTime = 300; // Time between AI decisions (ms)
+let aiDifficulty = 0.8; // 0.5 = easy, 1 = hard  
 
 let gamepad1, gamepad2;
 
@@ -20,7 +29,11 @@ export class Game extends Phaser.Scene {
     init(){
         mContext = this;
         width = this.game.config.width;
-        height = this.game.config.height;   
+        height = this.game.config.height;
+        
+        // Get game mode from registry
+        gameMode = this.registry.get('mode') || 'two';
+        aiEnabled = (gameMode === 'single');   
         
         background = this.add.tileSprite((width/2), 215, width, (height/2),'sky');
         clouds = this.add.tileSprite((width/2), 215, width, (height/2), 'cloud');        
@@ -50,14 +63,14 @@ export class Game extends Phaser.Scene {
 
         player1 = this.physics.add.sprite((width/3), 500, "p1-iddle", 0)
                 .setName("Player1")
-                .setSize(80, 150, true).setOffset(60, 25)
+                .setSize(30, 150, true).setOffset(90, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
         player1.score = 0;
 
         player2 = this.physics.add.sprite((width - (width/3)), 500, "p2-iddle", 0)
                 .setName("Player2")
-                .setSize(80, 150, true).setOffset(60, 25)
+                .setSize(30, 150, true).setOffset(90, 25)
                 .setMass(1)
                 .setCollideWorldBounds(true);
         player2.score = 0;
@@ -78,7 +91,65 @@ export class Game extends Phaser.Scene {
             radius: 100,
             dir: '8dir',
             fixed: true,
+            visible: !aiEnabled
         }).on('update', this.player2Controls, this);
+        
+        // Hide joystick base and thumb when AI is enabled
+        if (aiEnabled) {
+            joyStick2.setVisible(false);
+        }
+        /****/
+
+        /** VIRTUAL KICK BUTTONS **/
+        // Crear botón de patada para jugador 1
+        kickButton1 = this.add.circle(200, 350, 40, 0xff6600, 0.7);
+        kickButton1.setInteractive();
+        kickButton1.on('pointerdown', () => {
+            p1Kick = true;
+            player1.anims.play('p1-kick', true);
+            player1.setMass(5);
+        });
+        kickButton1.on('pointerup', () => {
+            p1Kick = false;
+            player1.setMass(1);
+        });
+        kickButton1.on('pointerout', () => {
+            p1Kick = false;
+            player1.setMass(1);
+        });
+
+        // Crear botón de patada para jugador 2
+        kickButton2 = this.add.circle(width - 200, 350, 40, 0x006CFF, 0.7);
+        kickButton2.setVisible(!aiEnabled);
+        if (!aiEnabled) {
+            kickButton2.setInteractive();
+            kickButton2.on('pointerdown', () => {
+                p2Kick = true;
+                player2.anims.play('p2-kick', true);
+                player2.setMass(5);
+            });
+            kickButton2.on('pointerup', () => {
+                p2Kick = false;
+                player2.setMass(1);
+            });
+            kickButton2.on('pointerout', () => {
+                p2Kick = false;
+                player2.setMass(1);
+            });
+        }
+
+        // Añadir texto a los botones
+        this.add.text(200, 350, 'TIRAR', { 
+            font: '16px Arial', 
+            fill: '#fff' 
+        }).setOrigin(0.5);
+        
+        if (!aiEnabled) {
+            this.add.text(width - 200, 350, 'TIRAR', { 
+                font: '16px Arial', 
+                fill: '#fff' 
+            }).setOrigin(0.5);
+        }
         /****/
 
         /** GAMEPADS **/
@@ -114,10 +185,19 @@ export class Game extends Phaser.Scene {
         backSound.setVolume(0.1);
         backSound.play();
 
-        scorePlayer1 = this.add.text((width/2) - 100, (height/5), player1.score, {font: '40px SoccerLeague', fill: '#fff'});
+        scorePlayer1 = this.add.text((width/2) - 200, (height/5) - 30, 'Jaime Rodriguez', {font: '24px SoccerLeague', fill: '#fff'}).setOrigin(0.5);
         scorePlayer1.setTint(0xff0000);
-        scorePlayer2 = this.add.text((width/2) + 100, (height/5), player2.score, {font: '40px SoccerLeague', fill: '#fff'});
+        let scoreP1 = this.add.text((width/2) - 210, (height/5), player1.score, {font: '40px SoccerLeague', fill: '#fff'});
+        scoreP1.setTint(0xff0000);
+        
+        scorePlayer2 = this.add.text((width/2) + 200, (height/5) - 30, 'Cristian Orlando', {font: '24px SoccerLeague', fill: '#fff'}).setOrigin(0.5);
         scorePlayer2.setTint(0x006CFF);
+        let scoreP2 = this.add.text((width/2) + 180, (height/5), player2.score, {font: '40px SoccerLeague', fill: '#fff'});
+        scoreP2.setTint(0x006CFF);
+        
+        // Store score text references for updates
+        this.scoreP1Text = scoreP1;
+        this.scoreP2Text = scoreP2;
  
         // Animations
         this.anims.create({
@@ -232,10 +312,26 @@ export class Game extends Phaser.Scene {
             goalSound.play();
             if (net.name === "net1"){
                 player2.score++;
-                scorePlayer2.setText(player2.score);
+                mContext.scoreP2Text.setText(player2.score);
             }else if (net.name === "net2"){
                 player1.score++;
-                scorePlayer1.setText(player1.score);
+                mContext.scoreP1Text.setText(player1.score);
+            }
+            
+            // Verificar si algún jugador llegó a 5 goles
+            if (player1.score >= 5 || player2.score >= 5) {
+                // Pasar datos del ganador a la escena GameOver
+                let winner = player1.score >= 5 ? 1 : 2;
+                let finalScoreP1 = player1.score;
+                let finalScoreP2 = player2.score;
+                
+                backSound.stop();
+                mContext.scene.start('GameOver', { 
+                    winner: winner, 
+                    scoreP1: finalScoreP1, 
+                    scoreP2: finalScoreP2 
+                });
+                return;
             }
             
             ball.setPosition((width/2), (height/2));
@@ -253,6 +349,11 @@ export class Game extends Phaser.Scene {
 
     update(){
         clouds.tilePositionX -= .2;
+        
+        // AI Logic for Player 2
+        if (aiEnabled) {
+            this.updateAI();
+        }
 
         if (p1GoLeft){
             player1.setVelocityX(-(p1Velocity));
@@ -299,8 +400,7 @@ export class Game extends Phaser.Scene {
         }
 
         gamepad1 = this.input.gamepad.getPad(0);
-        gamepad2 = this.input.gamepad.getPad(1);
-
+        
         if (gamepad1 && gamepad1.axes.length)
         {
             const axisH = gamepad1.axes[0].getValue();
@@ -319,21 +419,26 @@ export class Game extends Phaser.Scene {
             }
         }
 
-        if (gamepad2 && gamepad2.axes.length)
-        {
-            const axisH = gamepad2.axes[0].getValue();
-            // const axisV = pad.axes[1].getValue();
+        // Only allow gamepad control for player 2 if AI is disabled
+        if (!aiEnabled) {
+            gamepad2 = this.input.gamepad.getPad(1);
+            
+            if (gamepad2 && gamepad2.axes.length)
+            {
+                const axisH = gamepad2.axes[0].getValue();
+                // const axisV = pad.axes[1].getValue();
 
-            if (axisH < 0){
-                p2GoLeft = true;
-                p2GoRight = false;
-            }else if (axisH > 0){
-                p2GoRight = true;
-                p2GoLeft = false;
-            }
-            else {
-                p2GoRight = false;
-                p2GoLeft = false;
+                if (axisH < 0){
+                    p2GoLeft = true;
+                    p2GoRight = false;
+                }else if (axisH > 0){
+                    p2GoRight = true;
+                    p2GoLeft = false;
+                }
+                else {
+                    p2GoRight = false;
+                    p2GoLeft = false;
+                }
             }
         }
     }
@@ -371,6 +476,9 @@ export class Game extends Phaser.Scene {
     }
 
     player2Controls(){
+        // Only allow manual control if AI is disabled
+        if (aiEnabled) return;
+        
         let cursorKeys = joyStick2.createCursorKeys();
         for (var name in cursorKeys) {
             if (cursorKeys[name].isDown) {
@@ -426,27 +534,114 @@ export class Game extends Phaser.Scene {
             }
         });
 
-        gamepad2.on('down', function (pad, button, value) {
-            if (pad === 2){
-                p2Jump = true;
-            }
+        // Only setup gamepad controls for player 2 if AI is disabled
+        if (!aiEnabled && gamepad2) {
+            gamepad2.on('down', function (pad, button, value) {
+                if (pad === 2){
+                    p2Jump = true;
+                }
 
-            if (pad === 1){
-                p2Kick = true;
-                player2.anims.play('p2-kick', true);
-                player2.setMass(5);
-            }
-        });
+                if (pad === 1){
+                    p2Kick = true;
+                    player2.anims.play('p2-kick', true);
+                    player2.setMass(5);
+                }
+            });
 
-        gamepad2.on('up', function (pad, button, index) {
-            if (pad === 2){
-                p2Jump = false;
-            }
+            gamepad2.on('up', function (pad, button, index) {
+                if (pad === 2){
+                    p2Jump = false;
+                }
 
-            if (pad === 1){
-                p2Kick = false;
-                player2.setMass(1);
+                if (pad === 1){
+                    p2Kick = false;
+                    player2.setMass(1);
+                }
+            });
+        }
+    }
+    
+    updateAI() {
+        aiTimer += this.game.loop.delta;
+        
+        if (aiTimer >= aiDecisionTime) {
+            aiTimer = 0;
+            
+            // Reset AI movements
+            p2GoLeft = false;
+            p2GoRight = false;
+            p2Jump = false;
+            p2Kick = false;
+            
+            // Calculate distances and positions
+            const distanceToBall = Phaser.Math.Distance.Between(player2.x, player2.y, ball.x, ball.y);
+            const ballDirection = ball.x < player2.x ? 'left' : 'right';
+            const ballVelocityX = ball.body.velocity.x;
+            const goalX = 70; // Player2's goal position
+            
+            // AI Decision making based on game state
+            
+            // 1. Defend goal if ball is close and moving towards it
+            if (ball.x < width / 2 && ballVelocityX < -200 && ball.x < 400) {
+                // Defensive mode - stay near goal
+                if (player2.x > goalX + 150) {
+                    p2GoLeft = true;
+                } else if (player2.x < goalX + 50) {
+                    p2GoRight = true;
+                }
+                
+                // Jump to intercept high balls
+                if (ball.y < player2.y - 100 && distanceToBall < 200 && Math.random() < aiDifficulty) {
+                    p2Jump = true;
+                }
             }
-        });
+            // 2. Chase ball for offense
+            else if (distanceToBall > 80) {
+                // Move towards ball
+                if (ball.x < player2.x - 30) {
+                    p2GoLeft = true;
+                } else if (ball.x > player2.x + 30) {
+                    p2GoRight = true;
+                }
+                
+                // Jump if ball is above
+                if (ball.y < player2.y - 80 && distanceToBall < 150 && Math.random() < aiDifficulty * 0.8) {
+                    p2Jump = true;
+                }
+            }
+            // 3. Kick when close to ball
+            else if (distanceToBall < 80) {
+                // Determine kick timing based on difficulty
+                const kickChance = aiDifficulty * 0.7;
+                
+                if (Math.random() < kickChance) {
+                    p2Kick = true;
+                    player2.anims.play('p2-kick', true);
+                    player2.setMass(5);
+                    
+                    // Reset kick after short delay
+                    setTimeout(() => {
+                        p2Kick = false;
+                        player2.setMass(1);
+                    }, 200);
+                }
+            }
+            // 4. Position for attack
+            else if (ball.x > width / 2) {
+                // Move towards center for attack opportunity
+                const targetX = width * 0.75;
+                if (player2.x < targetX - 50) {
+                    p2GoRight = true;
+                } else if (player2.x > targetX + 50) {
+                    p2GoLeft = true;
+                }
+            }
+            
+            // Add some randomness to make AI less predictable
+            if (Math.random() < 0.1) {
+                p2GoLeft = !p2GoLeft;
+                p2GoRight = !p2GoRight;
+            }
+        }
     }
 }

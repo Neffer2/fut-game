@@ -1,4 +1,5 @@
 import { Boot } from './scenes/boot.js';
+import { Menu } from './scenes/menu.js';
 import { Preloader } from './scenes/preloader.js';
 import { Game } from './scenes/game.js';
 import { GameOver } from './scenes/gameOver.js';
@@ -13,6 +14,7 @@ const config = {
     },
     scene: [
         Boot,
+        Menu,
         Preloader,
         Game,
         GameOver
@@ -22,7 +24,7 @@ const config = {
         arcade: {
             // debug: true,
             gravity: { y: 1200 },
-            fps: 120 // Aumenta la frecuencia de actualización
+            fps: 120
         }
     },
     input :{
